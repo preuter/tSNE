@@ -8,12 +8,14 @@
   *
   *
   * @file tSNE.php
-  * @date 2015-10-13 12:47 PDT
+  * @date 2016-09-23 17:00 PDT
+  * @author Laurens van der Maaten
   * @author Paul Reuter
-  * @version 1.0.0
+  * @version 1.0.1
   *
   * @modifications <pre>
   * 1.0.0 - 2015-10-13 - Created from template: phpclass
+  * 1.0.1 - 2016-09-23 - Add original algorithm author attribution
   * </pre>
   */
 
