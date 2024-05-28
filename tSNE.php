@@ -8,14 +8,18 @@
   *
   *
   * @file tSNE.php
-  * @date 2016-09-23 17:00 PDT
+  * @date 2024-05-28 12:10 PDT
   * @author Laurens van der Maaten
+  * @link http://lvdmaaten.github.io/tsne/ [Original research and resources]
+  * @author Andrej Karpathy
+  * @link https://github.com/karpathy/tsnejs [Reference JavaScript port]
   * @author Paul Reuter
-  * @version 1.0.1
+  * @version 1.0.2
   *
   * @modifications <pre>
   * 1.0.0 - 2015-10-13 - Created from template: phpclass
   * 1.0.1 - 2016-09-23 - Add original algorithm author attribution
+  * 1.0.2 - 2024-05-28 - Add attribution, adjust whitespace
   * </pre>
   */
 
@@ -58,12 +62,12 @@ class tSNE {
    * @return new tSNE object
    */
   function tSNE($opts=null) { 
-    if( !is_array($opts) ) {
+    if (!is_array($opts)) {
       $opts = array();
     }
 
-    foreach( array('perplexity','dim','epsilon') as $k_opt ) {
-      if( isset($opts[$k_opt]) ) {
+    foreach (array('perplexity', 'dim', 'epsilon') as $k_opt) {
+      if (isset($opts[$k_opt])) {
         $this->$k_opt = $opts[$k_opt];
       }
     }
@@ -83,8 +87,8 @@ class tSNE {
   function initDataRaw($X) {
     $N = count($X);
     $D = count($X[0]);
-    $this->assert($N>0, " X is empty? You must have some data!");
-    $this->assert($D>0, " X[0] is empty? Where is the data?");
+    $this->assert($N > 0, " X is empty? You must have some data!");
+    $this->assert($D > 0, " X[0] is empty? Where is the data?");
     $dists = $this->xtod($X); // convert X to distances using gaussian kernel
     $this->P = $this->d2p($dists, $this->perplexity, 1e-4);
     $this->N = $N; // back up the size of the dataset
@@ -101,11 +105,11 @@ class tSNE {
    */
   function initDataDist($D) {
     $N = count($D);
-    $this->assert($N>0, " X is empty? You must have some data!");
+    $this->assert($N > 0, " X is empty? You must have some data!");
     // convert D to a (fast) typed array version
-    $dists = $this->zeros($N*$N);
-    for($i=0; $i<$N; $i++) {
-      for($j=$i+1; $j<$N; $j++) {
+    $dists = $this->zeros($N * $N);
+    for ($i = 0; $i < $N; $i++) {
+      for ($j = $i + 1; $j < $N; $j++) {
         $d = $D[$i][$j];
         $dists[$i*$N+$j] = $d;
         $dists[$j*$N+$i] = $d;
@@ -154,16 +158,16 @@ class tSNE {
 
     // perform gradient step
     $ymean = $this->zeros($this->dim);
-    for($i=0; $i<$N; $i++) {
-      for($d=0, $D=$this->dim; $d<$D; $d++) {
+    for ($i = 0; $i < $N; $i++) {
+      for ($d = 0, $D = $this->dim; $d < $D; $d++) {
         $gid = $grad[$i][$d];
         $sid = $this->ystep[$i][$d];
         $gainid = $this->gains[$i][$d];
 
         // compute gain update
-        $samesign = ($this->sign($gid)==$this->sign($sid));
+        $samesign = ($this->sign($gid) == $this->sign($sid));
         $newgain = ($samesign) ? $gainid * 0.8 : $gainid + 0.2;
-        if( $newgain < 0.01 ) {
+        if ($newgain < 0.01) {
           $newgain = 0.01; // clamp
         }
         $this->gains[$i][$d] = $newgain; // store for next turn
@@ -181,9 +185,9 @@ class tSNE {
     }
 
     // reproject Y to be zero mean
-    for($i=0; $i<$N; $i++) {
-      for($d=0,$D=$this->dim; $d<$D; $d++) {
-        $this->Y[$i][$d] -= $ymean[$d]/$N;
+    for ($i = 0; $i < $N; $i++) {
+      for ($d = 0, $D = $this->dim; $d < $D; $d++) {
+        $this->Y[$i][$d] -= $ymean[$d] / $N;
       }
     }
 
@@ -202,8 +206,8 @@ class tSNE {
     $grad = $cg['grad'];
 
     $e = 1e-5;
-    for($i=0; $i<$N; $i++) {
-      for($d=0, $D=$this->dim; $d<$D; $d++) {
+    for ($i = 0; $i < $N; $i++) {
+      for ($d = 0, $D = $this->dim; $d < $D; $d++) {
         $yold = $this->Y[$i][$d];
 
         $this->Y[$i][$d] = $yold + $e;
@@ -213,7 +217,7 @@ class tSNE {
         $cg1 = $this->costGrad($this->Y);
 
         $analytic = $grad[$i][$d];
-        $numerical = ($cg0['cost'] - $cg1['cost']) / (2*$e);
+        $numerical = ($cg0['cost'] - $cg1['cost']) / (2 * $e);
         error_log("debug: $i, $d: analytic: $analytic, numeric: $numerical");
 
         $this->Y[$i][$d] = $yold;
@@ -238,34 +242,34 @@ class tSNE {
     $NN = $N*$N;
     $Qu = $this->zeros($NN);
     $qsum = 0.0;
-    for($i=0; $i<$N; $i++) {
-      for($j=$i+1; $j<$N; $j++) {
+    for ($i = 0; $i < $N; $i++) {
+      for ($j = $i + 1; $j < $N; $j++) {
         $dsum = 0.0;
-        for($d=0; $d<$dim; $d++) {
+        for ($d = 0; $d < $dim; $d++) {
           $dhere = $Y[$i][$d] - $Y[$j][$d];
           $dsum += $dhere*$dhere;
         }
         $qu = 1.0 / (1.0 + $dsum); // Student t-distribution
-        $Qu[$i*$N+$j] = $qu;
-        $Qu[$j*$N+$i] = $qu;
+        $Qu[$i * $N + $j] = $qu;
+        $Qu[$j * $N + $i] = $qu;
         $qsum += $qu + $qu;
       }
     }
     // normalize Q distribution to sum to 1
     $Q = $this->zeros($NN);
-    for($q=0; $q<$NN; $q++) {
+    for ($q = 0; $q < $NN; $q++) {
       $Q[$q] = max($Qu[$q] / $qsum, 1e-100);
     }
 
     $cost = 0.0;
     $grad = array();
-    for($i=0; $i<$N; $i++) {
+    for ($i = 0; $i < $N; $i++) {
       // init grad for point i.
       $gsum = array_fill(0, $dim, 0.0);
-      for($j=0; $j<$N; $j++) {
-        $cost += -$P[$i*$N+$j] * log($Q[$i*$N+$j]); // accumulate cost
-        $premult = 4 * ($pmul * $P[$i*$N+$j] - $Q[$i*$N+$j]) * $Qu[$i*$N+$j];
-        for($d=0; $d<$dim; $d++) {
+      for ($j = 0; $j < $N; $j++) {
+        $cost += -$P[$i * $N + $j] * log($Q[$i * $N + $j]); // accumulate cost
+        $premult = 4 * ($pmul * $P[$i * $N + $j] - $Q[$i * $N + $j]) * $Qu[$i * $N + $j];
+        for ($d = 0; $d < $dim; $d++) {
           $gsum[$d] += $premult * ($Y[$i][$d] - $Y[$j][$d]);
         }
       }
@@ -285,7 +289,7 @@ class tSNE {
    * @access private
    */
   function assert($condition, $message="Assertion failed", $isFatal=true) {
-    if( !$condition ) {
+    if (!$condition) {
       trigger_error($message, ($isFatal) ? E_USER_ERROR : E_USER_WARNING);
       return false;
     }
@@ -305,24 +309,24 @@ class tSNE {
    * @access private
    */
   function gaussRandom() {
-    if( !isset($this->_return_v) ) {
+    if (!isset($this->_return_v)) {
       $this->_return_v = false;
       $this->_v_val = 0.0;
     }
-    if( $this->_return_v ) {
+    if ($this->_return_v) {
       $this->_return_v = false;
       return $this->_v_val;
     }
-    $u = 2*mt_rand()/mt_getrandmax() - 1;
-    $v = 2*mt_rand()/mt_getrandmax() - 1;
-    $r = $u*$u + $v*$v;
-    if( $r==0 || $r>1 ) {
+    $u = 2 * mt_rand() / mt_getrandmax() - 1;
+    $v = 2 * mt_rand() / mt_getrandmax() - 1;
+    $r = $u * $u + $v * $v;
+    if ($r == 0 || $r > 1) {
       return $this->gaussRandom();
     }
-    $c = sqrt(-2*log($r)/$r);
-    $this->_v_val = $v*$c; // cached for next time fn called.
+    $c = sqrt(-2 * log($r) / $r);
+    $this->_v_val = $v * $c; // cached for next time fn called.
     $this->_return_v = true;
-    return $u*$c;
+    return $u * $c;
   } // END: function gaussRandom()
 
 
@@ -330,7 +334,7 @@ class tSNE {
    * @access private
    */
   function randn($mu, $std) {
-    return $mu + $this->gaussRandom()*$std;
+    return $mu + $this->gaussRandom() * $std;
   } // END: function randn($mu, $std)
 
 
@@ -342,10 +346,10 @@ class tSNE {
    */
   function randn2d($n, $d, $s=null) {
     $x = array();
-    for($i=0; $i<$n; $i++) {
+    for ($i = 0; $i < $n; $i++) {
       $xhere = array();
-      for($j=0; $j<$d; $j++) {
-        $xhere[] = ($s===null) ? $this->randn(0.0, 1e-4) : $s;
+      for ($j = 0; $j < $d; $j++) {
+        $xhere[] = ($s === null) ? $this->randn(0.0, 1e-4) : $s;
       }
       $x[] = $xhere;
     }
@@ -357,10 +361,10 @@ class tSNE {
    * @access private
    */
   function zeros($n=0) {
-    if( (int)$n<=0 ) {
+    if ((int)$n <= 0) {
       return array();
     }
-    return array_fill(0,$n,0);
+    return array_fill(0, $n, 0);
   } // END: function zeros($n=0)
 
 
@@ -371,9 +375,9 @@ class tSNE {
    */
   function L2($x1, $x2) {
     $d = 0;
-    for($i=0, $D=count($x1); $i<$D; $i++) {
-      $diff = $x1[$i]-$x2[$i];
-      $d += $diff*$diff;
+    for ($i = 0, $D = count($x1); $i < $D; $i++) {
+      $diff = $x1[$i] - $x2[$i];
+      $d += $diff * $diff;
     }
     return $d;
   } // END: function L2($x1, $x2)
@@ -387,12 +391,12 @@ class tSNE {
   function xtod($X) {
     $N = count($X);
     // allocate contiguous array
-    $dist = $this->zeros($N*$N);
-    for($i=0; $i<$N; $i++) {
-      for($j=$i+1; $j<$N; $j++) {
+    $dist = $this->zeros($N * $N);
+    for ($i = 0; $i < $N; $i++) {
+      for ($j = $i + 1; $j < $N; $j++) {
         $d = $this->L2($X[$i], $X[$j]);
-        $dist[$i*$N+$j] = $d;
-        $dist[$j*$N+$i] = $d;
+        $dist[$i * $N + $j] = $d;
+        $dist[$j * $N + $i] = $d;
       }
     }
     return $dist;
@@ -408,12 +412,12 @@ class tSNE {
     // D should be square (unrolled array), so N (and Nf) should be an integer.
     $Nf = sqrt(count($D));
     $N = intVal($Nf);
-    $this->assert(!abs($Nf-$N), "D should have square number of elements.");
+    $this->assert(!abs($Nf - $N), "D should have square number of elements.");
     $Htarget = log($perplexity); // target entropy of distribution
-    $P = $this->zeros($N*$N); // temporary probability matrix
+    $P = $this->zeros($N * $N); // temporary probability matrix
 
     $prow = $this->zeros($N);
-    for($i=0; $i<$N; $i++) {
+    for ($i = 0; $i < $N; $i++) {
       $betamin = -INF;
       $betamax = INF;
       $beta = 1; // initial value of precision
@@ -423,12 +427,12 @@ class tSNE {
       // perform binary search to find a suitable precision beta
       // so that the entropy of the distribution is appropriate
       $num = 0;
-      while(!$done) {
+      while (!$done) {
         // compute entropy and kernel row with beta precision
         $psum = 0.0;
-        for($j=0; $j<$N; $j++) {
-          $pj = exp(-$D[$i*$N+$j] * $beta);
-          if( $i===$j ) {
+        for ($j = 0; $j < $N; $j++) {
+          $pj = exp(-$D[$i * $N + $j] * $beta);
+          if ($i === $j) {
             $pj = 0; // we don't care about diagonals
           }
           $prow[$j] = $pj;
@@ -436,18 +440,18 @@ class tSNE {
         }
         // normalize p and compute entropy
         $Hhere = 0.0;
-        for($j=0; $j<$N; $j++) {
-          $pj = ($psum==0) ? 0 : $prow[$j] / $psum;
+        for ($j = 0; $j < $N; $j++) {
+          $pj = ($psum == 0) ? 0 : $prow[$j] / $psum;
           $prow[$j] = $pj;
-          if( $prow[$j] > 1e-7 ) {
+          if ($prow[$j] > 1e-7) {
             $Hhere -= $pj * log($pj);
           }
         }
 
         // adjust beta based on result
-        if( $Hhere > $Htarget ) {
+        if ($Hhere > $Htarget) {
           $betabin = $beta; // move up the bounds
-          if( is_infinite($betamax) ) {
+          if (is_infinite($betamax)) {
             $beta = $beta * 2;
           } else {
             $beta = ($beta + $betamax) / 2;
@@ -455,7 +459,7 @@ class tSNE {
         } else {
           // converse case. make distribution less peaky
           $betamax = $beta;
-          if( is_infinite($betamin) ) {
+          if (is_infinite($betamin)) {
             $beta = $beta / 2;
           } else {
             $beta = ($beta + $betamin) / 2;
@@ -464,24 +468,23 @@ class tSNE {
 
         // stopping conditions: too many tries or got a good precision
         $num++;
-        if( abs($Hhere - $Htarget) < $tol
-        || $num >= $maxtries ) {
+        if (abs($Hhere - $Htarget) < $tol || $num >= $maxtries) {
           $done = true;
         }
       }
 
       // copy over the final prow to P at row i
-      for($j=0; $j<$N; $j++) {
-        $P[$i*$N+$j] = $prow[$j];
+      for ($j = 0; $j < $N; $j++) {
+        $P[$i * $N + $j] = $prow[$j];
       }
     } // end loop over example i
 
     // symmetrize P and normalize it to sum to 1 over all ij
-    $Pout = $this->zeros($N*$N);
-    $N2 = $N*2;
-    for($i=0; $i<$N; $i++) {
-      for($j=0; $j<$N; $j++) {
-        $Pout[$i*$N+$j] = max(($P[$i*$N+$j] + $P[$j*$N+$i])/$N2, 1e-100);
+    $Pout = $this->zeros($N * $N);
+    $N2 = $N * 2;
+    for ($i = 0; $i < $N; $i++) {
+      for ($j = 0; $j < $N; $j++) {
+        $Pout[$i * $N + $j] = max(($P[$i * $N + $j] + $P[$j * $N + $i]) / $N2, 1e-100);
       }
     }
 
@@ -503,10 +506,10 @@ class tSNE {
 
 /*
 // DEBUG:
-$dists = array( array(1,0.1,0.2), array(0.1,1,0.3), array(0.2,0.1,1));
+$dists = array(array(1,0.1,0.2), array(0.1,1,0.3), array(0.2,0.1,1));
 $tsne = new tSNE(array('epsilon'=>10));
 $tsne->initDataDist($dists);
-for( $k=0; $k<500; $k++) {
+for ($k = 0; $k < 500; $k++) {
   // every time you call this, the solution gets better.
   $tsne->step();
 }
